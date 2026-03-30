@@ -82,7 +82,7 @@
                                 data-seqnos="{{ row.seq_nos }}" onchange="updateCount()">
                         </td>
                         <td class="px-2 py-3 cursor-pointer text-center"
-                            onclick="toggleExpand(this, '{{ row.display_name | replace("'", "\\'") }}')">
+                            onclick="toggleExpand(this)">
                             <span class="expand-icon text-gray-400 select-none text-xs">▶</span>
                         </td>
                         <td class="px-3 py-3">
@@ -94,7 +94,7 @@
                             {% endif %}
                         </td>
                         <td class="px-4 py-3 font-medium text-gray-800 cursor-pointer"
-                            onclick="toggleExpand(this.closest('tr').querySelector('td:nth-child(2)'), '{{ row.display_name | replace("'", "\\'") }}')">
+                            onclick="toggleExpand(this)">
                             {{ row.display_name or '-' }}
                             <span class="text-xs text-gray-400 ml-1">({{ row.item_count }})</span>
                         </td>
@@ -299,8 +299,9 @@ document.getElementById('btn-generate').addEventListener('click', () => {
 });
 
 // ─── Expand / Collapse ────────────────────────────────────────────────────────
-async function toggleExpand(cell, groupName) {
+async function toggleExpand(cell) {
     const tr = cell.closest('tr');
+    const groupName = tr.dataset.group || '';
     const icon = tr.querySelector('.expand-icon');
     const next = tr.nextElementSibling;
 
