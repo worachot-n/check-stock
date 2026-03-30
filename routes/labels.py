@@ -28,44 +28,47 @@ def inventory():
     search_like = f'%{search}%' if search else '%'
     params = {'search_like': search_like, 'section': section or None}
 
-    where = """
+    # Normalise name: trim whitespace, treat blank as NULL
+    NAME_EXPR = "COALESCE(NULLIF(TRIM(requisition_item), ''), NULLIF(TRIM(item_name), ''))"
+
+    where = f"""
         WHERE (:search_like = '%'
-               OR COALESCE(NULLIF(requisition_item, ''), item_name) ILIKE :search_like
-               OR item_number ILIKE :search_like)
+               OR {NAME_EXPR} ILIKE :search_like
+               OR TRIM(item_number) ILIKE :search_like)
           AND (:section IS NULL OR supply_control_section = :section)
     """
 
     # Distinct section list for the filter dropdown
     sections = db.session.execute(text("""
-        SELECT DISTINCT supply_control_section
+        SELECT DISTINCT TRIM(supply_control_section)
         FROM supply_requisitions
-        WHERE supply_control_section IS NOT NULL AND supply_control_section <> ''
-        ORDER BY supply_control_section
+        WHERE supply_control_section IS NOT NULL AND TRIM(supply_control_section) <> ''
+        ORDER BY 1
     """)).scalars().all()
 
     total_rows = db.session.execute(text(f"""
         SELECT COUNT(*) FROM (
-            SELECT COALESCE(NULLIF(requisition_item, ''), item_name)
+            SELECT {NAME_EXPR}
             FROM supply_requisitions
             {where}
-            GROUP BY COALESCE(NULLIF(requisition_item, ''), item_name)
+            GROUP BY {NAME_EXPR}
         ) sub
     """), params).scalar()
 
     rows = db.session.execute(text(f"""
         SELECT
-            COALESCE(NULLIF(requisition_item, ''), item_name) AS display_name,
-            STRING_AGG(DISTINCT item_number, ', ')            AS item_numbers,
-            SUM(quantity)                                     AS total_quantity,
-            MAX(unit_of_measure)                              AS unit_of_measure,
-            MAX(issuing_unit)                                 AS issuing_unit,
-            STRING_AGG(CAST(sequence_no AS TEXT), ',')        AS seq_nos,
-            BOOL_AND(verified)                                AS all_verified,
-            COUNT(*)                                          AS item_count,
-            MAX(item_image)                                   AS item_image
+            {NAME_EXPR}                                        AS display_name,
+            STRING_AGG(DISTINCT TRIM(item_number), ', ')      AS item_numbers,
+            SUM(quantity)                                      AS total_quantity,
+            MAX(unit_of_measure)                               AS unit_of_measure,
+            MAX(issuing_unit)                                  AS issuing_unit,
+            STRING_AGG(CAST(sequence_no AS TEXT), ',')         AS seq_nos,
+            BOOL_AND(verified)                                 AS all_verified,
+            COUNT(*)                                           AS item_count,
+            MAX(item_image)                                    AS item_image
         FROM supply_requisitions
         {where}
-        GROUP BY COALESCE(NULLIF(requisition_item, ''), item_name)
+        GROUP BY {NAME_EXPR}
         ORDER BY display_name
         LIMIT :limit OFFSET :offset
     """), {**params, 'limit': PER_PAGE, 'offset': (page - 1) * PER_PAGE}).fetchall()
@@ -91,8 +94,8 @@ def group_items():
         return jsonify([])
 
     items = SupplyRequisition.query.filter(
-        text("COALESCE(NULLIF(requisition_item, ''), item_name) = :name")
-    ).params(name=display_name).order_by(SupplyRequisition.sequence_no).all()
+        text("COALESCE(NULLIF(TRIM(requisition_item), ''), NULLIF(TRIM(item_name), '')) = :name")
+    ).params(name=display_name.strip()).order_by(SupplyRequisition.sequence_no).all()
 
     return jsonify([_to_dict(i) for i in items])
 
