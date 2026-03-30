@@ -13,8 +13,8 @@ class SupplyRequisition(db.Model):
         default=uuid.uuid4
     )
     item_number = db.Column(db.String(50))
-    original_item = db.Column(db.String(255))
-    requisition_item = db.Column(db.String(255))
+    original_item = db.Column(db.Text)
+    requisition_item = db.Column(db.Text)
     item_name = db.Column(db.String(255))
     issuing_unit = db.Column(db.String(100))
     requisition_unit = db.Column(db.String(100))

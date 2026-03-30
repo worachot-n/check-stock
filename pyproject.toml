@@ -11,6 +11,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "python-barcode[images]>=0.15",
     "fpdf2>=2.8",
+    "pandas>=3.0.1",
 ]
 
 [tool.uv]
