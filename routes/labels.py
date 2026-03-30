@@ -289,19 +289,19 @@ def build_label_pdf(items):
     else:
         use_thai_font = False
 
-    # Layout: 4 columns × 10 rows = 40 labels per A4 page
+    # Layout: 4 columns × 8 rows = 32 labels per A4 page
     margin_left = 6
     margin_top  = 8
     label_w     = 45      # mm
-    label_h     = 28      # mm
+    label_h     = 35      # mm  (taller to fit bigger text)
     cols        = 4
     col_gap     = (210 - margin_left * 2 - label_w * cols) / (cols - 1)  # 6 mm
-    max_rows    = int((297 - margin_top * 2) // label_h)                  # 10 rows
+    max_rows    = int((297 - margin_top * 2) // label_h)                  # 8 rows
 
-    barcode_h   = 11      # barcode image height (mm)
-    text_offset = barcode_h + 2   # text starts below barcode
-    line_h      = 3.2     # line height (mm)
-    font_size   = 6
+    barcode_h   = 14      # barcode image height (mm)
+    text_offset = barcode_h + 0.5   # tight gap below barcode
+    line_h      = 4.5     # line height (mm)
+    font_size   = 9
 
     col = 0
     row = 0
@@ -335,9 +335,9 @@ def build_label_pdf(items):
         pdf.set_xy(x + 0.5, text_y)
         pdf.cell(label_w - 1, line_h, f"#{item.sequence_no}  {item.item_number or ''}", ln=1)
         pdf.set_xy(x + 0.5, text_y + line_h)
-        pdf.cell(label_w - 1, line_h, (item.requisition_item or item.item_name or '')[:24], ln=1)
+        pdf.cell(label_w - 1, line_h, (item.requisition_item or item.item_name or '')[:18], ln=1)
         pdf.set_xy(x + 0.5, text_y + line_h * 2)
-        pdf.cell(label_w - 1, line_h, (item.issuing_unit or '')[:24], ln=1)
+        pdf.cell(label_w - 1, line_h, (item.issuing_unit or '')[:18], ln=1)
 
         col += 1
         if col >= cols:

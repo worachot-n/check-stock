@@ -8,6 +8,19 @@ from config import Config
 from models import db
 from models.user import User
 from models.log import ActivityLog
+from sqlalchemy import text
+
+
+def _fix_sequence():
+    """Reset supply_requisitions PK sequence to max existing value."""
+    db.session.execute(text("""
+        SELECT setval(
+            pg_get_serial_sequence('supply_requisitions', 'sequence_no'),
+            COALESCE(MAX(sequence_no), 0)
+        )
+        FROM supply_requisitions
+    """))
+    db.session.commit()
 
 
 def create_app():
@@ -39,6 +52,7 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _fix_sequence()
 
     return app
 
