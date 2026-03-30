@@ -5,7 +5,11 @@
 <div class="space-y-4">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-800">รายการอุปกรณ์ทั้งหมด</h1>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+            <button onclick="openAddModal()"
+                class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition font-semibold">
+                + เพิ่มรายการใหม่
+            </button>
             <button id="btn-select-all" onclick="toggleSelectAll()"
                 class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm px-3 py-2 rounded-lg transition">
                 เลือกทั้งหมด
@@ -37,25 +41,43 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-left border-b">
-                        <th class="px-4 py-3 w-10">
-                            <input type="checkbox" id="check-all" onchange="toggleSelectAll()" class="rounded">
-                        </th>
+                        <th class="px-3 py-3 w-8"><input type="checkbox" id="check-all" onchange="toggleSelectAll()" class="rounded"></th>
+                        <th class="px-2 py-3 w-6"></th>
+                        <th class="px-3 py-3 w-14">รูป</th>
                         <th class="px-4 py-3 font-medium">รายการขอเบิก</th>
                         <th class="px-4 py-3 font-medium">เลขที่อุปกรณ์</th>
                         <th class="px-4 py-3 font-medium">จำนวนรวม</th>
                         <th class="px-4 py-3 font-medium">หน่วย</th>
                         <th class="px-4 py-3 font-medium">หน่วยงาน</th>
                         <th class="px-4 py-3 font-medium">สถานะ</th>
+                        <th class="px-4 py-3 w-4"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody>
                     {% for row in rows %}
-                    <tr class="hover:bg-blue-50 transition cursor-pointer" onclick="rowClick(this)">
-                        <td class="px-4 py-3" onclick="event.stopPropagation()">
+                    <tr class="group-row hover:bg-blue-50 transition border-b border-gray-100"
+                        data-group="{{ row.display_name }}" data-seqnos="{{ row.seq_nos }}">
+                        <td class="px-3 py-3" onclick="event.stopPropagation()">
                             <input type="checkbox" class="item-check rounded"
                                 data-seqnos="{{ row.seq_nos }}" onchange="updateCount()">
                         </td>
-                        <td class="px-4 py-3 font-medium text-gray-800">{{ row.display_name or '-' }}</td>
+                        <td class="px-2 py-3 cursor-pointer text-center"
+                            onclick="toggleExpand(this, '{{ row.display_name | replace("'", "\\'") }}')">
+                            <span class="expand-icon text-gray-400 select-none text-xs">▶</span>
+                        </td>
+                        <td class="px-3 py-3">
+                            {% if row.item_image %}
+                            <img src="/static/uploads/items/{{ row.item_image }}"
+                                class="h-10 w-10 object-cover rounded border" alt="">
+                            {% else %}
+                            <div class="h-10 w-10 rounded border bg-gray-100 flex items-center justify-center text-gray-300 text-xs leading-tight text-center">ไม่มีรูป</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-800 cursor-pointer"
+                            onclick="toggleExpand(this.closest('tr').querySelector('td:nth-child(2)'), '{{ row.display_name | replace("'", "\\'") }}')">
+                            {{ row.display_name or '-' }}
+                            <span class="text-xs text-gray-400 ml-1">({{ row.item_count }})</span>
+                        </td>
                         <td class="px-4 py-3 text-gray-500 text-xs leading-relaxed">
                             {% if row.item_numbers %}
                                 {% for no in row.item_numbers.split(', ') %}
@@ -73,11 +95,10 @@
                             <span class="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">รอตรวจ</span>
                             {% endif %}
                         </td>
+                        <td></td>
                     </tr>
                     {% else %}
-                    <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-400">ไม่พบรายการ</td>
-                    </tr>
+                    <tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">ไม่พบรายการ</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -99,54 +120,401 @@
     </div>
     {% endif %}
 </div>
+
+<!-- ─── Add / Edit Modal ──────────────────────────────────────────────────── -->
+<div id="item-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
+            <h2 id="modal-title" class="text-lg font-semibold text-gray-800">เพิ่มรายการใหม่</h2>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+
+        <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <input type="hidden" id="modal-seq-no">
+
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">รายการที่ขอเบิก <span class="text-red-400">*</span></label>
+                <input type="text" id="m-requisition_item" list="dl-requisition_item" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-requisition_item" data-field="requisition_item"></datalist>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">ชื่ออุปกรณ์ (สำรอง)</label>
+                <input type="text" id="m-item_name" list="dl-item_name" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-item_name" data-field="item_name"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">เลขที่อุปกรณ์</label>
+                <input type="text" id="m-item_number" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">รายการเดิม</label>
+                <input type="text" id="m-original_item" list="dl-original_item" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-original_item" data-field="original_item"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">จำนวน</label>
+                <input type="number" step="0.01" id="m-quantity" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยนับ</label>
+                <input type="text" id="m-unit_of_measure" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยงานที่จ่าย</label>
+                <input type="text" id="m-issuing_unit" list="dl-issuing_unit" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-issuing_unit" data-field="issuing_unit"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยงานที่ขอเบิก</label>
+                <input type="text" id="m-requisition_unit" list="dl-requisition_unit" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-requisition_unit" data-field="requisition_unit"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">จ่ายให้</label>
+                <input type="text" id="m-issued_to" list="dl-issued_to" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-issued_to" data-field="issued_to"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">สถานะ</label>
+                <input type="text" id="m-status" list="dl-status" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-status" data-field="status"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">ผู้รับผิดชอบ</label>
+                <input type="text" id="m-responsible_person" list="dl-responsible_person" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-responsible_person" data-field="responsible_person"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">เบอร์โทร</label>
+                <input type="text" id="m-responsible_phone" list="dl-responsible_phone" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-responsible_phone" data-field="responsible_phone"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">วันที่ทำรายการ</label>
+                <input type="date" id="m-transaction_date" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">ประเภทสิ่งอุปกรณ์</label>
+                <input type="text" id="m-supply_type" list="dl-supply_type" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-supply_type" data-field="supply_type"></datalist>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">หมายเหตุ</label>
+                <textarea id="m-remarks" rows="2" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+            </div>
+
+            <!-- Item Image Upload -->
+            <div class="md:col-span-2 border-t pt-4">
+                <label class="block text-gray-600 font-medium mb-2">รูปภาพอุปกรณ์</label>
+                <img id="m-item-image-preview" src="" alt=""
+                    class="hidden w-full max-h-48 object-contain rounded-lg border mb-2 bg-gray-50">
+                <a id="m-item-image-current" href="#" target="_blank"
+                    class="hidden text-xs text-blue-600 hover:underline block mb-2"></a>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="bg-gray-100 hover:bg-gray-200 border text-gray-600 text-sm px-3 py-1.5 rounded-lg transition">
+                        📷 เลือก / ถ่ายรูป
+                    </span>
+                    <input type="file" id="m-item_image" accept="image/*" capture="environment" class="hidden"
+                        onchange="previewModalImage(this, 'm-item-image-preview')">
+                    <span class="text-xs text-gray-400">PNG, JPG, JPEG, WEBP</span>
+                </label>
+            </div>
+
+            <!-- Requisition File Upload -->
+            <div class="md:col-span-2 border-t pt-4">
+                <label class="block text-gray-600 font-medium mb-2">ไฟล์ใบเบิก (PDF หรือรูปภาพ)</label>
+                <a id="m-req-file-current" href="#" target="_blank"
+                    class="hidden text-xs text-blue-600 hover:underline block mb-2"></a>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="bg-gray-100 hover:bg-gray-200 border text-gray-600 text-sm px-3 py-1.5 rounded-lg transition">
+                        📎 เลือกไฟล์
+                    </span>
+                    <input type="file" id="m-requisition_file" accept=".pdf,.png,.jpg,.jpeg" class="hidden"
+                        onchange="showFileName(this, 'm-req-file-chosen')">
+                    <span class="text-xs text-gray-400">PDF, PNG, JPG, JPEG (สูงสุด 16 MB)</span>
+                </label>
+                <p id="m-req-file-chosen" class="text-xs text-gray-500 mt-1 hidden"></p>
+            </div>
+        </div>
+
+        <div id="modal-error" class="hidden mx-5 mb-2 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm"></div>
+        <div class="flex justify-end gap-3 p-5 border-t sticky bottom-0 bg-white">
+            <button onclick="closeModal()" class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100 text-sm transition">ยกเลิก</button>
+            <button onclick="saveModal()" class="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-semibold transition">บันทึก</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function rowClick(row) {
-    const cb = row.querySelector('.item-check');
-    cb.checked = !cb.checked;
-    updateCount();
-}
+const TEXT_FIELDS = [
+    'requisition_item','item_name','item_number','original_item',
+    'quantity','unit_of_measure','issuing_unit','requisition_unit',
+    'issued_to','status','responsible_person','responsible_phone',
+    'transaction_date','supply_type','remarks'
+];
 
+// ─── Select / Labels ──────────────────────────────────────────────────────────
 function toggleSelectAll() {
-    const boxes = document.querySelectorAll('.item-check');
     const checked = document.getElementById('check-all').checked;
-    boxes.forEach(b => b.checked = checked);
+    document.querySelectorAll('.item-check').forEach(b => b.checked = checked);
     updateCount();
 }
-
 function updateCount() {
-    const checked = document.querySelectorAll('.item-check:checked').length;
-    const countEl = document.getElementById('selected-count');
-    document.getElementById('count-num').textContent = checked;
-    countEl.classList.toggle('hidden', checked === 0);
+    const n = document.querySelectorAll('.item-check:checked').length;
+    document.getElementById('count-num').textContent = n;
+    document.getElementById('selected-count').classList.toggle('hidden', n === 0);
 }
-
 document.getElementById('btn-generate').addEventListener('click', () => {
-    // Collect all sequence_nos from every selected group (data-seqnos is comma-separated)
     const seq_nos = [...document.querySelectorAll('.item-check:checked')]
         .flatMap(el => el.dataset.seqnos.split(',').map(s => s.trim()).filter(Boolean));
+    if (!seq_nos.length) { alert('กรุณาเลือกอย่างน้อย 1 รายการ'); return; }
+    fetch('/labels/generate', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ seq_nos })
+    }).then(r => r.ok ? r.blob() : Promise.reject())
+      .then(blob => window.open(URL.createObjectURL(blob), '_blank'))
+      .catch(() => alert('เกิดข้อผิดพลาดในการสร้าง PDF'));
+});
 
-    if (seq_nos.length === 0) {
-        alert('กรุณาเลือกอุปกรณ์อย่างน้อย 1 รายการ');
+// ─── Expand / Collapse ────────────────────────────────────────────────────────
+async function toggleExpand(cell, groupName) {
+    const tr = cell.closest('tr');
+    const icon = tr.querySelector('.expand-icon');
+    const next = tr.nextElementSibling;
+
+    if (next && next.classList.contains('sub-rows')) {
+        next.remove(); icon.textContent = '▶'; return;
+    }
+    icon.textContent = '▼';
+
+    const res = await fetch(`/api/group_items?group=${encodeURIComponent(groupName)}`);
+    const items = await res.json();
+
+    const subTr = document.createElement('tr');
+    subTr.className = 'sub-rows';
+    subTr.innerHTML = `<td colspan="9" class="p-0 border-b border-blue-100">
+        <table class="w-full text-xs bg-blue-50">
+            <thead>
+                <tr class="text-gray-500 border-b border-blue-100">
+                    <th class="pl-14 pr-4 py-2 font-medium text-left w-16">ลำดับ</th>
+                    <th class="px-4 py-2 font-medium text-left">เลขที่</th>
+                    <th class="px-4 py-2 font-medium text-left">จำนวน</th>
+                    <th class="px-4 py-2 font-medium text-left">หน่วย</th>
+                    <th class="px-4 py-2 font-medium text-left">รูป</th>
+                    <th class="px-4 py-2 font-medium text-left">ใบเบิก</th>
+                    <th class="px-4 py-2 font-medium text-left">สถานะ</th>
+                    <th class="px-4 py-2 font-medium text-right">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${items.map(item => `
+                <tr class="border-b border-blue-100 hover:bg-blue-100 transition" id="sub-row-${item.sequence_no}">
+                    <td class="pl-14 pr-4 py-2 text-gray-500">${item.sequence_no}</td>
+                    <td class="px-4 py-2">${item.item_number || '-'}</td>
+                    <td class="px-4 py-2">${item.quantity ?? '-'}</td>
+                    <td class="px-4 py-2 text-gray-500">${item.unit_of_measure || '-'}</td>
+                    <td class="px-4 py-2">
+                        ${item.item_image_url
+                            ? `<a href="${item.item_image_url}" target="_blank">
+                                <img src="${item.item_image_url}" class="h-8 w-8 object-cover rounded border">
+                               </a>`
+                            : '<span class="text-gray-300">-</span>'}
+                    </td>
+                    <td class="px-4 py-2">
+                        ${item.requisition_file_url
+                            ? `<a href="${item.requisition_file_url}" target="_blank"
+                                class="text-blue-600 hover:underline">📄 ดูไฟล์</a>`
+                            : '<span class="text-gray-300">-</span>'}
+                    </td>
+                    <td class="px-4 py-2">
+                        ${item.verified
+                            ? '<span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">✓ ตรวจแล้ว</span>'
+                            : '<span class="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">รอตรวจ</span>'}
+                    </td>
+                    <td class="px-4 py-2 text-right space-x-2 whitespace-nowrap">
+                        <button onclick="openEditModal(${item.sequence_no})"
+                            class="text-blue-600 hover:underline">แก้ไข</button>
+                        <button onclick="toggleLogs(${item.sequence_no})"
+                            class="text-gray-500 hover:underline">ประวัติ</button>
+                        <button onclick="deleteItem(${item.sequence_no}, '${groupName}')"
+                            class="text-red-500 hover:underline">ลบ</button>
+                    </td>
+                </tr>
+                <tr id="log-row-${item.sequence_no}" class="hidden">
+                    <td colspan="8" class="pl-14 pr-4 py-0">
+                        <div class="bg-white border border-gray-100 rounded-lg my-1 overflow-hidden">
+                            <div class="px-3 py-1.5 bg-gray-50 text-xs font-medium text-gray-500 border-b">ประวัติการดำเนินการ — ลำดับที่ ${item.sequence_no}</div>
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="text-gray-400 text-left border-b border-gray-100">
+                                        <th class="px-3 py-1.5 font-medium">การดำเนินการ</th>
+                                        <th class="px-3 py-1.5 font-medium">รายละเอียด</th>
+                                        <th class="px-3 py-1.5 font-medium">ผู้ดำเนินการ</th>
+                                        <th class="px-3 py-1.5 font-medium">วันที่/เวลา</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="log-body-${item.sequence_no}">
+                                    <tr><td colspan="4" class="px-3 py-3 text-center text-gray-300">กำลังโหลด...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+    </td>`;
+    tr.insertAdjacentElement('afterend', subTr);
+}
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
+async function deleteItem(seqNo, groupName) {
+    if (!confirm(`ยืนยันการลบลำดับที่ ${seqNo}?`)) return;
+    const res = await fetch(`/inventory/item/${seqNo}/delete`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+        const row = document.getElementById(`sub-row-${seqNo}`);
+        if (row) row.remove();
+    } else {
+        alert('เกิดข้อผิดพลาดในการลบ');
+    }
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function clearModal() {
+    document.getElementById('modal-seq-no').value = '';
+    document.getElementById('modal-error').classList.add('hidden');
+    TEXT_FIELDS.forEach(f => { const el = document.getElementById('m-' + f); if (el) el.value = ''; });
+    document.getElementById('m-item_image').value = '';
+    document.getElementById('m-requisition_file').value = '';
+    document.getElementById('m-item-image-preview').classList.add('hidden');
+    document.getElementById('m-item-image-current').classList.add('hidden');
+    document.getElementById('m-req-file-current').classList.add('hidden');
+    document.getElementById('m-req-file-chosen').classList.add('hidden');
+}
+
+function openAddModal() {
+    clearModal();
+    document.getElementById('modal-title').textContent = 'เพิ่มรายการใหม่';
+    document.getElementById('item-modal').classList.remove('hidden');
+}
+
+async function openEditModal(seqNo) {
+    clearModal();
+    document.getElementById('modal-title').textContent = `แก้ไขรายการ #${seqNo}`;
+    document.getElementById('modal-seq-no').value = seqNo;
+
+    const res = await fetch(`/api/item/${seqNo}`);
+    const data = await res.json();
+
+    TEXT_FIELDS.forEach(f => {
+        const el = document.getElementById('m-' + f);
+        if (el) el.value = data[f] ?? '';
+    });
+
+    if (data.item_image_url) {
+        const img = document.getElementById('m-item-image-preview');
+        img.src = data.item_image_url;
+        img.classList.remove('hidden');
+    }
+    if (data.requisition_file_url) {
+        const link = document.getElementById('m-req-file-current');
+        link.href = data.requisition_file_url;
+        link.textContent = '📄 ไฟล์ปัจจุบัน: ' + data.requisition_file;
+        link.classList.remove('hidden');
+    }
+    document.getElementById('item-modal').classList.remove('hidden');
+}
+
+function closeModal() { document.getElementById('item-modal').classList.add('hidden'); }
+
+async function saveModal() {
+    const seqNo = document.getElementById('modal-seq-no').value;
+    const form = new FormData();
+
+    TEXT_FIELDS.forEach(f => {
+        const el = document.getElementById('m-' + f);
+        if (el) form.append(f, el.value || '');
+    });
+
+    const imgFile = document.getElementById('m-item_image').files[0];
+    if (imgFile) form.append('item_image', imgFile);
+
+    const reqFile = document.getElementById('m-requisition_file').files[0];
+    if (reqFile) form.append('requisition_file', reqFile);
+
+    const url = seqNo ? `/inventory/item/${seqNo}/edit` : '/inventory/item/add';
+    const res = await fetch(url, { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (data.success) {
+        closeModal();
+        window.location.reload();
+    } else {
+        const errEl = document.getElementById('modal-error');
+        errEl.textContent = data.error || 'เกิดข้อผิดพลาด';
+        errEl.classList.remove('hidden');
+    }
+}
+
+// ─── Activity Logs ───────────────────────────────────────────────────────────
+const ACTION_COLORS = {
+    'สร้างรายการ': 'bg-blue-100 text-blue-700',
+    'แก้ไขข้อมูล': 'bg-yellow-100 text-yellow-700',
+    'ยืนยันข้อมูล': 'bg-green-100 text-green-700',
+    'ลบรายการ':    'bg-red-100 text-red-700',
+};
+
+async function toggleLogs(seqNo) {
+    const logRow = document.getElementById(`log-row-${seqNo}`);
+    if (!logRow) return;
+
+    if (!logRow.classList.contains('hidden')) {
+        logRow.classList.add('hidden');
         return;
     }
 
-    fetch('/labels/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seq_nos })
-    })
-    .then(res => {
-        if (!res.ok) throw new Error('เกิดข้อผิดพลาดในการสร้าง PDF');
-        return res.blob();
-    })
-    .then(blob => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-    })
-    .catch(err => alert(err.message));
-});
+    logRow.classList.remove('hidden');
+    const tbody = document.getElementById(`log-body-${seqNo}`);
+
+    const res = await fetch(`/api/item/${seqNo}/logs`);
+    const logs = await res.json();
+
+    if (!logs.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-3 text-center text-gray-300">ยังไม่มีประวัติ</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = logs.map(log => {
+        const color = ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-600';
+        return `<tr class="border-t border-gray-100">
+            <td class="px-3 py-1.5">
+                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium ${color}">${log.action}</span>
+            </td>
+            <td class="px-3 py-1.5 text-gray-500">${log.action_detail || '-'}</td>
+            <td class="px-3 py-1.5 font-medium text-gray-700">${log.performed_by}</td>
+            <td class="px-3 py-1.5 text-gray-400">${log.performed_at}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ─── File helpers ─────────────────────────────────────────────────────────────
+function previewModalImage(input, previewId) {
+    const file = input.files[0];
+    if (!file) return;
+    const img = document.getElementById(previewId);
+    img.src = URL.createObjectURL(file);
+    img.classList.remove('hidden');
+}
+function showFileName(input, labelId) {
+    const el = document.getElementById(labelId);
+    if (input.files[0]) { el.textContent = 'เลือก: ' + input.files[0].name; el.classList.remove('hidden'); }
+}
+
+// Close on backdrop / Escape
+document.getElementById('item-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 </script>
+<script src="{{ url_for('static', filename='js/suggestions.js') }}"></script>
 {% endblock %}

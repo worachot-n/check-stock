@@ -21,7 +21,8 @@ class SupplyRequisition(db.Model):
     remarks = db.Column(db.Text)
     supply_type = db.Column(db.String(100))
     has_requisition = db.Column(db.Boolean)
-    requisition_number = db.Column(db.String(100))
+    requisition_file = db.Column(db.String(255))   # filename of uploaded requisition doc
+    item_image = db.Column(db.String(255))          # filename of uploaded item photo
     transaction_date = db.Column(db.Date)
     responsible_person = db.Column(db.String(100))
     responsible_phone = db.Column(db.String(20))

@@ -9,7 +9,7 @@
     <div class="bg-white rounded-xl shadow p-6">
         <div id="reader" class="w-full rounded-lg overflow-hidden"></div>
         <div class="mt-3 flex gap-2">
-            <input type="number" id="manual-seq" placeholder="หรือพิมพ์เลขลำดับที่ (sequence_no)..."
+            <input type="number" id="manual-seq" placeholder="หรือพิมพ์เลขลำดับที่..."
                 class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button onclick="lookupManual()"
                 class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition">
@@ -29,21 +29,24 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">รายการที่ขอเบิก</label>
+                <input type="text" id="f-requisition_item" list="dl-requisition_item" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-requisition_item" data-field="requisition_item"></datalist>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">รายการเดิม</label>
+                <input type="text" id="f-original_item" list="dl-original_item" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-original_item" data-field="original_item"></datalist>
+            </div>
             <div>
                 <label class="block text-gray-500 mb-1">เลขที่อุปกรณ์</label>
                 <input type="text" id="f-item_number" class="w-full border rounded-lg px-3 py-2">
             </div>
             <div>
-                <label class="block text-gray-500 mb-1">ชื่ออุปกรณ์</label>
-                <input type="text" id="f-item_name" class="w-full border rounded-lg px-3 py-2">
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-gray-500 mb-1">รายการที่ขอเบิก</label>
-                <input type="text" id="f-requisition_item" class="w-full border rounded-lg px-3 py-2">
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-gray-500 mb-1">รายการเดิม</label>
-                <input type="text" id="f-original_item" class="w-full border rounded-lg px-3 py-2">
+                <label class="block text-gray-500 mb-1">ชื่ออุปกรณ์ (สำรอง)</label>
+                <input type="text" id="f-item_name" list="dl-item_name" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-item_name" data-field="item_name"></datalist>
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">จำนวน</label>
@@ -55,39 +58,72 @@
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">หน่วยงานที่จ่าย</label>
-                <input type="text" id="f-issuing_unit" class="w-full border rounded-lg px-3 py-2">
+                <input type="text" id="f-issuing_unit" list="dl-issuing_unit" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-issuing_unit" data-field="issuing_unit"></datalist>
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">หน่วยงานที่ขอเบิก</label>
-                <input type="text" id="f-requisition_unit" class="w-full border rounded-lg px-3 py-2">
+                <input type="text" id="f-requisition_unit" list="dl-requisition_unit" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-requisition_unit" data-field="requisition_unit"></datalist>
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">จ่ายให้</label>
-                <input type="text" id="f-issued_to" class="w-full border rounded-lg px-3 py-2">
+                <input type="text" id="f-issued_to" list="dl-issued_to" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-issued_to" data-field="issued_to"></datalist>
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">สถานะ</label>
-                <input type="text" id="f-status" class="w-full border rounded-lg px-3 py-2">
+                <input type="text" id="f-status" list="dl-status" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-status" data-field="status"></datalist>
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">ผู้รับผิดชอบ</label>
-                <input type="text" id="f-responsible_person" class="w-full border rounded-lg px-3 py-2">
+                <input type="text" id="f-responsible_person" list="dl-responsible_person" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-responsible_person" data-field="responsible_person"></datalist>
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">เบอร์โทรผู้รับผิดชอบ</label>
-                <input type="text" id="f-responsible_phone" class="w-full border rounded-lg px-3 py-2">
+                <input type="text" id="f-responsible_phone" list="dl-responsible_phone" class="w-full border rounded-lg px-3 py-2">
+                <datalist id="dl-responsible_phone" data-field="responsible_phone"></datalist>
             </div>
             <div>
                 <label class="block text-gray-500 mb-1">วันที่ทำรายการ</label>
                 <input type="date" id="f-transaction_date" class="w-full border rounded-lg px-3 py-2">
             </div>
-            <div>
-                <label class="block text-gray-500 mb-1">เลขที่ใบเบิก</label>
-                <input type="text" id="f-requisition_number" class="w-full border rounded-lg px-3 py-2">
-            </div>
             <div class="md:col-span-2">
                 <label class="block text-gray-500 mb-1">หมายเหตุ</label>
                 <textarea id="f-remarks" rows="2" class="w-full border rounded-lg px-3 py-2"></textarea>
+            </div>
+
+            <!-- Item Image -->
+            <div class="md:col-span-2 border-t pt-3">
+                <label class="block text-gray-600 font-medium mb-2">รูปภาพอุปกรณ์</label>
+                <img id="item-image-preview" src="" alt="รูปอุปกรณ์"
+                    class="hidden w-full max-h-48 object-contain rounded-lg border mb-2 bg-gray-50">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="bg-gray-100 hover:bg-gray-200 border text-gray-600 text-sm px-3 py-1.5 rounded-lg transition">
+                        📷 เลือก / ถ่ายรูป
+                    </span>
+                    <input type="file" id="f-item_image" accept="image/*" capture="environment" class="hidden"
+                        onchange="previewImage(this, 'item-image-preview')">
+                    <span class="text-xs text-gray-400">PNG, JPG, JPEG, WEBP</span>
+                </label>
+            </div>
+
+            <!-- Requisition File -->
+            <div class="md:col-span-2 border-t pt-3">
+                <label class="block text-gray-600 font-medium mb-2">ไฟล์ใบเบิก (PDF หรือรูปภาพ)</label>
+                <a id="requisition-file-link" href="#" target="_blank"
+                    class="hidden text-blue-600 hover:underline text-sm block mb-2">
+                </a>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="bg-gray-100 hover:bg-gray-200 border text-gray-600 text-sm px-3 py-1.5 rounded-lg transition">
+                        📎 เลือกไฟล์
+                    </span>
+                    <input type="file" id="f-requisition_file" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+                    <span class="text-xs text-gray-400">PDF, PNG, JPG, JPEG (สูงสุด 16 MB)</span>
+                </label>
+                <p id="req-file-chosen" class="text-xs text-gray-500 mt-1 hidden"></p>
             </div>
         </div>
 
@@ -105,13 +141,44 @@
                 💾 บันทึกการแก้ไข
             </button>
         </div>
+
+        <!-- Activity Log -->
+        <div class="border-t pt-4">
+            <h3 class="text-sm font-semibold text-gray-600 mb-2">ประวัติการดำเนินการ</h3>
+            <div id="log-table-wrap" class="overflow-x-auto">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-500 text-left">
+                            <th class="px-3 py-2 font-medium">การดำเนินการ</th>
+                            <th class="px-3 py-2 font-medium">รายละเอียด</th>
+                            <th class="px-3 py-2 font-medium">ผู้ดำเนินการ</th>
+                            <th class="px-3 py-2 font-medium">วันที่/เวลา</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body">
+                        <tr><td colspan="4" class="px-3 py-4 text-center text-gray-300">—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div id="error-msg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
+    <div id="msg" class="hidden px-4 py-3 rounded-lg text-sm"></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/suggestions.js') }}"></script>
+<script>
+// Show chosen filename for requisition file
+document.getElementById('f-requisition_file').addEventListener('change', function() {
+    const p = document.getElementById('req-file-chosen');
+    if (this.files[0]) {
+        p.textContent = 'เลือก: ' + this.files[0].name;
+        p.classList.remove('hidden');
+    }
+});
+</script>
 {% endblock %}

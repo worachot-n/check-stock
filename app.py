@@ -7,6 +7,7 @@ load_dotenv()
 from config import Config
 from models import db
 from models.user import User
+from models.log import ActivityLog
 
 
 def create_app():

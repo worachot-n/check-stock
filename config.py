@@ -7,6 +7,7 @@ class Config:
         'postgresql://user:password@localhost:5432/supply_db'
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024   # 16 MB upload limit
     SQLALCHEMY_ENGINE_OPTIONS = {
         'connect_args': {'client_encoding': 'utf8'}
     }

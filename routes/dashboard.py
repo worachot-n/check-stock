@@ -24,7 +24,8 @@ def index():
             SUM(sr.quantity)                               AS total_quantity,
             MAX(sr.unit_of_measure)                        AS unit_of_measure,
             MAX(u.username)                                AS verified_by,
-            MAX(sr.last_verified_at)                       AS last_verified_at
+            MAX(sr.last_verified_at)                       AS last_verified_at,
+            MAX(sr.item_image)                             AS item_image
         FROM supply_requisitions sr
         LEFT JOIN users u ON sr.last_verified_by = u.id
         WHERE sr.verified = TRUE

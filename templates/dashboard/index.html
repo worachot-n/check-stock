@@ -3,7 +3,13 @@
 
 {% block content %}
 <div class="space-y-6">
-    <h1 class="text-2xl font-bold text-gray-800">ภาพรวมคลังอุปกรณ์</h1>
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800">ภาพรวมคลังอุปกรณ์</h1>
+        <button onclick="openAddModal()"
+            class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition font-semibold">
+            + เพิ่มรายการใหม่
+        </button>
+    </div>
 
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -46,24 +52,37 @@
 
     <!-- Recent Verified -->
     <div class="bg-white rounded-xl shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">รายการที่ตรวจสอบล่าสุด</h2>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-700">รายการที่ตรวจสอบล่าสุด</h2>
+            <a href="{{ url_for('labels.inventory') }}" class="text-sm text-blue-600 hover:underline">ดูทั้งหมด →</a>
+        </div>
 
         {% if recent_items %}
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-left">
+                        <th class="px-4 py-2 font-medium w-14">รูป</th>
                         <th class="px-4 py-2 font-medium">รายการขอเบิก</th>
                         <th class="px-4 py-2 font-medium">เลขที่อุปกรณ์</th>
                         <th class="px-4 py-2 font-medium">จำนวนรวม</th>
                         <th class="px-4 py-2 font-medium">หน่วย</th>
                         <th class="px-4 py-2 font-medium">ผู้ตรวจสอบ</th>
                         <th class="px-4 py-2 font-medium">วันที่ตรวจสอบ</th>
+                        <th class="px-4 py-2 font-medium w-20"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for row in recent_items %}
                     <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            {% if row.item_image %}
+                            <img src="/static/uploads/items/{{ row.item_image }}"
+                                class="h-10 w-10 object-cover rounded border" alt="">
+                            {% else %}
+                            <div class="h-10 w-10 rounded border bg-gray-100 flex items-center justify-center text-gray-300 text-xs">ไม่มีรูป</div>
+                            {% endif %}
+                        </td>
                         <td class="px-4 py-3 font-medium text-gray-800">{{ row.display_name or '-' }}</td>
                         <td class="px-4 py-3 text-gray-500 text-xs">{{ row.item_numbers or '-' }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ row.total_quantity or '-' }}</td>
@@ -71,6 +90,10 @@
                         <td class="px-4 py-3 text-gray-600">{{ row.verified_by or '-' }}</td>
                         <td class="px-4 py-3 text-gray-500">
                             {{ row.last_verified_at.strftime('%d/%m/%Y %H:%M') if row.last_verified_at else '-' }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <a href="{{ url_for('labels.inventory') }}?search={{ row.display_name | urlencode }}"
+                                class="text-blue-600 hover:underline text-xs">แก้ไข</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -98,4 +121,152 @@
         </a>
     </div>
 </div>
+
+<!-- ─── Add Item Modal ─────────────────────────────────────────────────────── -->
+<div id="item-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between p-5 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">เพิ่มรายการใหม่</h2>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">รายการที่ขอเบิก <span class="text-red-400">*</span></label>
+                <input type="text" id="m-requisition_item" list="dl-requisition_item" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-requisition_item" data-field="requisition_item"></datalist>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">ชื่ออุปกรณ์ (สำรอง)</label>
+                <input type="text" id="m-item_name" list="dl-item_name" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-item_name" data-field="item_name"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">เลขที่อุปกรณ์</label>
+                <input type="text" id="m-item_number" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">รายการเดิม</label>
+                <input type="text" id="m-original_item" list="dl-original_item" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-original_item" data-field="original_item"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">จำนวน</label>
+                <input type="number" step="0.01" id="m-quantity" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยนับ</label>
+                <input type="text" id="m-unit_of_measure" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยงานที่จ่าย</label>
+                <input type="text" id="m-issuing_unit" list="dl-issuing_unit" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-issuing_unit" data-field="issuing_unit"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยงานที่ขอเบิก</label>
+                <input type="text" id="m-requisition_unit" list="dl-requisition_unit" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-requisition_unit" data-field="requisition_unit"></datalist>
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">วันที่ทำรายการ</label>
+                <input type="date" id="m-transaction_date" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">หมายเหตุ</label>
+                <textarea id="m-remarks" rows="2" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+            </div>
+
+            <!-- Item Image -->
+            <div class="md:col-span-2 border-t pt-4">
+                <label class="block text-gray-600 font-medium mb-2">รูปภาพอุปกรณ์</label>
+                <img id="m-item-image-preview" src="" alt="" class="hidden w-full max-h-40 object-contain rounded-lg border mb-2 bg-gray-50">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="bg-gray-100 hover:bg-gray-200 border text-gray-600 text-sm px-3 py-1.5 rounded-lg transition">
+                        📷 เลือก / ถ่ายรูป
+                    </span>
+                    <input type="file" id="m-item_image" accept="image/*" capture="environment" class="hidden"
+                        onchange="previewModalImage(this, 'm-item-image-preview')">
+                    <span class="text-xs text-gray-400">PNG, JPG, JPEG, WEBP</span>
+                </label>
+            </div>
+
+            <!-- Requisition File -->
+            <div class="md:col-span-2 border-t pt-4">
+                <label class="block text-gray-600 font-medium mb-2">ไฟล์ใบเบิก (PDF หรือรูปภาพ)</label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="bg-gray-100 hover:bg-gray-200 border text-gray-600 text-sm px-3 py-1.5 rounded-lg transition">
+                        📎 เลือกไฟล์
+                    </span>
+                    <input type="file" id="m-requisition_file" accept=".pdf,.png,.jpg,.jpeg" class="hidden"
+                        onchange="showFileName(this, 'm-req-file-chosen')">
+                    <span class="text-xs text-gray-400">PDF, PNG, JPG, JPEG</span>
+                </label>
+                <p id="m-req-file-chosen" class="text-xs text-gray-500 mt-1 hidden"></p>
+            </div>
+        </div>
+        <div id="modal-error" class="hidden mx-5 mb-2 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm"></div>
+        <div class="flex justify-end gap-3 p-5 border-t">
+            <button onclick="closeModal()" class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100 text-sm transition">ยกเลิก</button>
+            <button onclick="saveModal()" class="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-semibold transition">บันทึก</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const MODAL_FIELDS = [
+    'requisition_item','item_name','item_number','original_item',
+    'quantity','unit_of_measure','issuing_unit','requisition_unit',
+    'transaction_date','remarks'
+];
+
+function openAddModal() {
+    MODAL_FIELDS.forEach(f => { const el = document.getElementById('m-' + f); if (el) el.value = ''; });
+    document.getElementById('m-item_image').value = '';
+    document.getElementById('m-requisition_file').value = '';
+    document.getElementById('m-item-image-preview').classList.add('hidden');
+    document.getElementById('m-req-file-chosen').classList.add('hidden');
+    document.getElementById('modal-error').classList.add('hidden');
+    document.getElementById('item-modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('item-modal').classList.add('hidden'); }
+
+async function saveModal() {
+    const form = new FormData();
+    MODAL_FIELDS.forEach(f => {
+        const el = document.getElementById('m-' + f);
+        if (el) form.append(f, el.value || '');
+    });
+    const imgFile = document.getElementById('m-item_image').files[0];
+    if (imgFile) form.append('item_image', imgFile);
+    const reqFile = document.getElementById('m-requisition_file').files[0];
+    if (reqFile) form.append('requisition_file', reqFile);
+
+    const res = await fetch('/inventory/item/add', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.success) {
+        closeModal();
+        window.location.reload();
+    } else {
+        const errEl = document.getElementById('modal-error');
+        errEl.textContent = data.error || 'เกิดข้อผิดพลาด';
+        errEl.classList.remove('hidden');
+    }
+}
+function previewModalImage(input, previewId) {
+    const file = input.files[0];
+    if (!file) return;
+    const img = document.getElementById(previewId);
+    img.src = URL.createObjectURL(file);
+    img.classList.remove('hidden');
+}
+function showFileName(input, labelId) {
+    const el = document.getElementById(labelId);
+    if (input.files[0]) { el.textContent = 'เลือก: ' + input.files[0].name; el.classList.remove('hidden'); }
+}
+document.getElementById('item-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+<script src="{{ url_for('static', filename='js/suggestions.js') }}"></script>
 {% endblock %}
