@@ -287,14 +287,14 @@ def build_label_pdf(items):
     margin_left = 6
     margin_top  = 8
     label_w     = 45      # mm
-    label_h     = 24      # mm
+    label_h     = 25      # mm
     cols        = 4
     col_gap     = (210 - margin_left * 2 - label_w * cols) / (cols - 1)  # 6 mm
     max_rows    = int((297 - margin_top * 2) // label_h)                  # 8 rows
 
     barcode_h   = 10      # barcode image height (mm)
-    text_offset = barcode_h + 1     # gap below barcode
-    line_h      = 2.0     # line height (mm)
+    text_offset = barcode_h + 2     # gap below barcode
+    line_h      = 4.0     # line height (mm)
     font_size   = 12
 
     col = 0
