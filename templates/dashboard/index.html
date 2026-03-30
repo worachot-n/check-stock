@@ -53,22 +53,24 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-left">
-                        <th class="px-4 py-2 font-medium">ชื่ออุปกรณ์</th>
-                        <th class="px-4 py-2 font-medium">จำนวน</th>
+                        <th class="px-4 py-2 font-medium">รายการขอเบิก</th>
+                        <th class="px-4 py-2 font-medium">เลขที่อุปกรณ์</th>
+                        <th class="px-4 py-2 font-medium">จำนวนรวม</th>
                         <th class="px-4 py-2 font-medium">หน่วย</th>
                         <th class="px-4 py-2 font-medium">ผู้ตรวจสอบ</th>
                         <th class="px-4 py-2 font-medium">วันที่ตรวจสอบ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    {% for item, username in recent_items %}
+                    {% for row in recent_items %}
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium text-gray-800">{{ item.item_name or '-' }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ item.quantity or '-' }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ item.unit_of_measure or '-' }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ username or '-' }}</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">{{ row.display_name or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-500 text-xs">{{ row.item_numbers or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ row.total_quantity or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ row.unit_of_measure or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ row.verified_by or '-' }}</td>
                         <td class="px-4 py-3 text-gray-500">
-                            {{ item.last_verified_at.strftime('%d/%m/%Y %H:%M') if item.last_verified_at else '-' }}
+                            {{ row.last_verified_at.strftime('%d/%m/%Y %H:%M') if row.last_verified_at else '-' }}
                         </td>
                     </tr>
                     {% endfor %}

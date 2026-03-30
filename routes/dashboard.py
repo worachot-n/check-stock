@@ -2,7 +2,6 @@ from flask import Blueprint, render_template
 from sqlalchemy import func, text
 from models import db
 from models.supply import SupplyRequisition
-from models.user import User
 from decorators import login_required
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -18,14 +17,21 @@ def index():
     ).scalar()
     unverified_count = total - verified_count
 
-    recent_items = (
-        db.session.query(SupplyRequisition, User.username)
-        .outerjoin(User, SupplyRequisition.last_verified_by == User.id)
-        .filter(SupplyRequisition.verified == True)
-        .order_by(SupplyRequisition.last_verified_at.desc())
-        .limit(10)
-        .all()
-    )
+    recent_items = db.session.execute(text("""
+        SELECT
+            COALESCE(sr.requisition_item, sr.item_name)   AS display_name,
+            STRING_AGG(DISTINCT sr.item_number, ', ')      AS item_numbers,
+            SUM(sr.quantity)                               AS total_quantity,
+            MAX(sr.unit_of_measure)                        AS unit_of_measure,
+            MAX(u.username)                                AS verified_by,
+            MAX(sr.last_verified_at)                       AS last_verified_at
+        FROM supply_requisitions sr
+        LEFT JOIN users u ON sr.last_verified_by = u.id
+        WHERE sr.verified = TRUE
+        GROUP BY COALESCE(sr.requisition_item, sr.item_name)
+        ORDER BY MAX(sr.last_verified_at) DESC
+        LIMIT 10
+    """)).fetchall()
 
     return render_template(
         'dashboard/index.html',

@@ -19,7 +19,7 @@
 
     <!-- Search -->
     <form method="GET" class="flex gap-2">
-        <input type="text" name="search" value="{{ search }}" placeholder="ค้นหาชื่ออุปกรณ์, เลขที่..."
+        <input type="text" name="search" value="{{ search }}" placeholder="ค้นหารายการขอเบิก, เลขที่..."
             class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition">ค้นหา</button>
         {% if search %}
@@ -28,7 +28,7 @@
     </form>
 
     <div id="selected-count" class="text-sm text-blue-700 font-medium hidden">
-        เลือกแล้ว <span id="count-num">0</span> รายการ
+        เลือกแล้ว <span id="count-num">0</span> กลุ่ม
     </div>
 
     <!-- Table -->
@@ -40,32 +40,34 @@
                         <th class="px-4 py-3 w-10">
                             <input type="checkbox" id="check-all" onchange="toggleSelectAll()" class="rounded">
                         </th>
-                        <th class="px-4 py-3 font-medium">ลำดับ</th>
-                        <th class="px-4 py-3 font-medium">เลขที่</th>
-                        <th class="px-4 py-3 font-medium">ชื่ออุปกรณ์</th>
                         <th class="px-4 py-3 font-medium">รายการขอเบิก</th>
-                        <th class="px-4 py-3 font-medium">จำนวน</th>
+                        <th class="px-4 py-3 font-medium">เลขที่อุปกรณ์</th>
+                        <th class="px-4 py-3 font-medium">จำนวนรวม</th>
                         <th class="px-4 py-3 font-medium">หน่วย</th>
                         <th class="px-4 py-3 font-medium">หน่วยงาน</th>
                         <th class="px-4 py-3 font-medium">สถานะ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    {% for item in items.items %}
+                    {% for row in rows %}
                     <tr class="hover:bg-blue-50 transition cursor-pointer" onclick="rowClick(this)">
                         <td class="px-4 py-3" onclick="event.stopPropagation()">
                             <input type="checkbox" class="item-check rounded"
-                                data-uuid="{{ item.barcode_uuid }}" onchange="updateCount()">
+                                data-seqnos="{{ row.seq_nos }}" onchange="updateCount()">
                         </td>
-                        <td class="px-4 py-3 text-gray-500">{{ item.sequence_no }}</td>
-                        <td class="px-4 py-3 font-medium">{{ item.item_number or '-' }}</td>
-                        <td class="px-4 py-3">{{ item.item_name or '-' }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ item.requisition_item or '-' }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ item.quantity or '-' }}</td>
-                        <td class="px-4 py-3 text-gray-500">{{ item.unit_of_measure or '-' }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ item.issuing_unit or '-' }}</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">{{ row.display_name or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-500 text-xs leading-relaxed">
+                            {% if row.item_numbers %}
+                                {% for no in row.item_numbers.split(', ') %}
+                                <span class="inline-block bg-gray-100 rounded px-1.5 py-0.5 mr-1 mb-1">{{ no }}</span>
+                                {% endfor %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-gray-700 font-medium">{{ row.total_quantity or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-500">{{ row.unit_of_measure or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ row.issuing_unit or '-' }}</td>
                         <td class="px-4 py-3">
-                            {% if item.verified %}
+                            {% if row.all_verified %}
                             <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✓ ตรวจแล้ว</span>
                             {% else %}
                             <span class="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">รอตรวจ</span>
@@ -74,7 +76,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="9" class="px-4 py-8 text-center text-gray-400">ไม่พบรายการ</td>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-400">ไม่พบรายการ</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -83,15 +85,15 @@
     </div>
 
     <!-- Pagination -->
-    {% if items.pages > 1 %}
+    {% if pagination.pages > 1 %}
     <div class="flex justify-center gap-2 text-sm">
-        {% if items.has_prev %}
-        <a href="{{ url_for('labels.inventory', page=items.prev_num, search=search) }}"
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('labels.inventory', page=pagination.prev_num, search=search) }}"
             class="px-3 py-1.5 border rounded-lg hover:bg-gray-100 transition">← ก่อนหน้า</a>
         {% endif %}
-        <span class="px-3 py-1.5 text-gray-600">หน้า {{ items.page }} / {{ items.pages }}</span>
-        {% if items.has_next %}
-        <a href="{{ url_for('labels.inventory', page=items.next_num, search=search) }}"
+        <span class="px-3 py-1.5 text-gray-600">หน้า {{ pagination.page }} / {{ pagination.pages }}</span>
+        {% if pagination.has_next %}
+        <a href="{{ url_for('labels.inventory', page=pagination.next_num, search=search) }}"
             class="px-3 py-1.5 border rounded-lg hover:bg-gray-100 transition">ถัดไป →</a>
         {% endif %}
     </div>
@@ -101,8 +103,6 @@
 
 {% block scripts %}
 <script>
-let allSelected = false;
-
 function rowClick(row) {
     const cb = row.querySelector('.item-check');
     cb.checked = !cb.checked;
@@ -111,9 +111,8 @@ function rowClick(row) {
 
 function toggleSelectAll() {
     const boxes = document.querySelectorAll('.item-check');
-    const checkAll = document.getElementById('check-all');
-    allSelected = checkAll.checked;
-    boxes.forEach(b => b.checked = allSelected);
+    const checked = document.getElementById('check-all').checked;
+    boxes.forEach(b => b.checked = checked);
     updateCount();
 }
 
@@ -125,10 +124,11 @@ function updateCount() {
 }
 
 document.getElementById('btn-generate').addEventListener('click', () => {
-    const checked = [...document.querySelectorAll('.item-check:checked')]
-        .map(el => el.dataset.uuid);
+    // Collect all sequence_nos from every selected group (data-seqnos is comma-separated)
+    const seq_nos = [...document.querySelectorAll('.item-check:checked')]
+        .flatMap(el => el.dataset.seqnos.split(',').map(s => s.trim()).filter(Boolean));
 
-    if (checked.length === 0) {
+    if (seq_nos.length === 0) {
         alert('กรุณาเลือกอุปกรณ์อย่างน้อย 1 รายการ');
         return;
     }
@@ -136,7 +136,7 @@ document.getElementById('btn-generate').addEventListener('click', () => {
     fetch('/labels/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uuids: checked })
+        body: JSON.stringify({ seq_nos })
     })
     .then(res => {
         if (!res.ok) throw new Error('เกิดข้อผิดพลาดในการสร้าง PDF');

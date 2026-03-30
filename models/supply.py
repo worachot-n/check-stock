@@ -1,4 +1,3 @@
-import uuid
 from models import db
 
 
@@ -6,12 +5,6 @@ class SupplyRequisition(db.Model):
     __tablename__ = 'supply_requisitions'
 
     sequence_no = db.Column(db.Integer, primary_key=True)
-    barcode_uuid = db.Column(
-        db.UUID(as_uuid=True),
-        nullable=False,
-        unique=True,
-        default=uuid.uuid4
-    )
     item_number = db.Column(db.String(50))
     original_item = db.Column(db.Text)
     requisition_item = db.Column(db.Text)

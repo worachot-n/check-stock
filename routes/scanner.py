@@ -14,16 +14,15 @@ def scan():
     return render_template('scanner/scan.html')
 
 
-@scanner_bp.route('/api/get_item/<uuid:barcode_uuid>')
+@scanner_bp.route('/api/get_item/<int:sequence_no>')
 @login_required
-def get_item(barcode_uuid):
-    item = SupplyRequisition.query.filter_by(barcode_uuid=barcode_uuid).first()
+def get_item(sequence_no):
+    item = SupplyRequisition.query.get(sequence_no)
     if not item:
         return jsonify({'error': 'ไม่พบรายการนี้ในระบบ'}), 404
 
     return jsonify({
         'sequence_no': item.sequence_no,
-        'barcode_uuid': str(item.barcode_uuid),
         'item_number': item.item_number,
         'original_item': item.original_item,
         'requisition_item': item.requisition_item,
@@ -49,10 +48,10 @@ def get_item(barcode_uuid):
     })
 
 
-@scanner_bp.route('/api/verify/<uuid:barcode_uuid>', methods=['POST'])
+@scanner_bp.route('/api/verify/<int:sequence_no>', methods=['POST'])
 @login_required
-def verify_item(barcode_uuid):
-    item = SupplyRequisition.query.filter_by(barcode_uuid=barcode_uuid).first()
+def verify_item(sequence_no):
+    item = SupplyRequisition.query.get(sequence_no)
     if not item:
         return jsonify({'error': 'ไม่พบรายการนี้ในระบบ'}), 404
 
@@ -64,10 +63,10 @@ def verify_item(barcode_uuid):
     return jsonify({'success': True, 'message': 'ยืนยันข้อมูลสำเร็จ'})
 
 
-@scanner_bp.route('/api/update/<uuid:barcode_uuid>', methods=['POST'])
+@scanner_bp.route('/api/update/<int:sequence_no>', methods=['POST'])
 @login_required
-def update_item(barcode_uuid):
-    item = SupplyRequisition.query.filter_by(barcode_uuid=barcode_uuid).first()
+def update_item(sequence_no):
+    item = SupplyRequisition.query.get(sequence_no)
     if not item:
         return jsonify({'error': 'ไม่พบรายการนี้ในระบบ'}), 404
 

@@ -1,9 +1,13 @@
-let currentUUID = null;
+let currentSeqNo = null;
 let html5QrcodeScanner = null;
 
 function onScanSuccess(decodedText) {
-    currentUUID = decodedText.trim();
-    fetchItem(currentUUID);
+    const seq = parseInt(decodedText.trim(), 10);
+    if (isNaN(seq)) {
+        showError('บาร์โค้ดไม่ใช่ตัวเลข ลำดับที่ไม่ถูกต้อง');
+        return;
+    }
+    fetchItem(seq);
 }
 
 function onScanFailure(error) {
@@ -27,25 +31,29 @@ function initScanner() {
     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 }
 
-function fetchItem(uuid) {
+function fetchItem(seqNo) {
     hideError();
-    fetch(`/api/get_item/${uuid}`)
+    fetch(`/api/get_item/${seqNo}`)
         .then(res => res.json())
         .then(data => {
             if (data.error) {
                 showError(data.error);
                 return;
             }
-            currentUUID = data.barcode_uuid;
+            currentSeqNo = data.sequence_no;
             populateForm(data);
         })
         .catch(() => showError('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
 }
 
 function lookupManual() {
-    const uuid = document.getElementById('manual-uuid').value.trim();
-    if (!uuid) return;
-    fetchItem(uuid);
+    const val = document.getElementById('manual-seq').value.trim();
+    const seq = parseInt(val, 10);
+    if (!val || isNaN(seq)) {
+        showError('กรุณาพิมพ์เลขลำดับที่ (sequence_no)');
+        return;
+    }
+    fetchItem(seq);
 }
 
 function populateForm(data) {
@@ -61,6 +69,8 @@ function populateForm(data) {
         if (el) el.value = data[f] ?? '';
     });
 
+    document.getElementById('f-seq-no').textContent = data.sequence_no;
+
     const badge = document.getElementById('verified-badge');
     badge.classList.toggle('hidden', !data.verified);
 
@@ -75,8 +85,8 @@ function populateForm(data) {
 }
 
 function verifyItem() {
-    if (!currentUUID) return;
-    fetch(`/api/verify/${currentUUID}`, { method: 'POST' })
+    if (!currentSeqNo) return;
+    fetch(`/api/verify/${currentSeqNo}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -90,7 +100,7 @@ function verifyItem() {
 }
 
 function updateItem() {
-    if (!currentUUID) return;
+    if (!currentSeqNo) return;
     const payload = {
         item_number: document.getElementById('f-item_number').value,
         item_name: document.getElementById('f-item_name').value,
@@ -109,7 +119,7 @@ function updateItem() {
         remarks: document.getElementById('f-remarks').value,
     };
 
-    fetch(`/api/update/${currentUUID}`, {
+    fetch(`/api/update/${currentSeqNo}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -129,6 +139,7 @@ function updateItem() {
 function showError(msg) {
     const el = document.getElementById('error-msg');
     el.textContent = msg;
+    el.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
     el.classList.remove('hidden');
     setTimeout(() => el.classList.add('hidden'), 5000);
 }
@@ -138,10 +149,7 @@ function showSuccess(msg) {
     el.textContent = msg;
     el.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-sm';
     el.classList.remove('hidden');
-    setTimeout(() => {
-        el.classList.add('hidden');
-        el.className = 'hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm';
-    }, 3000);
+    setTimeout(() => el.classList.add('hidden'), 3000);
 }
 
 function hideError() {
@@ -150,6 +158,6 @@ function hideError() {
 
 document.addEventListener('DOMContentLoaded', initScanner);
 
-document.getElementById('manual-uuid').addEventListener('keypress', (e) => {
+document.getElementById('manual-seq').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') lookupManual();
 });
