@@ -89,13 +89,18 @@ def inventory():
 @login_required
 def group_items():
     display_name = request.args.get('group', '').strip()
+    section      = request.args.get('section', '').strip()
     if not display_name:
         return jsonify([])
 
-    items = SupplyRequisition.query.filter(
+    q = SupplyRequisition.query.filter(
         text("COALESCE(NULLIF(requisition_item, ''), item_name) = :name")
-    ).params(name=display_name).order_by(SupplyRequisition.sequence_no).all()
+    ).params(name=display_name)
 
+    if section:
+        q = q.filter(SupplyRequisition.supply_control_section == section)
+
+    items = q.order_by(SupplyRequisition.sequence_no).all()
     return jsonify([_to_dict(i) for i in items])
 
 

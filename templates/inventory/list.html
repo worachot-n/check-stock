@@ -273,6 +273,8 @@
 
 {% block scripts %}
 <script>
+const ACTIVE_SECTION = {{ section | tojson }};
+
 const TEXT_FIELDS = [
     'requisition_item','item_name','item_number','original_item',
     'quantity','unit_of_measure','issuing_unit','requisition_unit',
@@ -315,7 +317,8 @@ async function toggleExpand(cell) {
     }
     icon.textContent = '▼';
 
-    const res = await fetch(`/api/group_items?group=${encodeURIComponent(groupName)}`);
+    const sectionParam = ACTIVE_SECTION ? `&section=${encodeURIComponent(ACTIVE_SECTION)}` : '';
+    const res = await fetch(`/api/group_items?group=${encodeURIComponent(groupName)}${sectionParam}`);
     const items = await res.json();
 
     const subTr = document.createElement('tr');
