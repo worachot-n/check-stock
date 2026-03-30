@@ -21,7 +21,7 @@ def index():
         SELECT
             COALESCE(sr.requisition_item, sr.item_name)   AS display_name,
             STRING_AGG(DISTINCT sr.item_number, ', ')      AS item_numbers,
-            SUM(sr.quantity)                               AS total_quantity,
+            COUNT(*)                                       AS total_quantity,
             MAX(sr.unit_of_measure)                        AS unit_of_measure,
             MAX(u.username)                                AS verified_by,
             MAX(sr.last_verified_at)                       AS last_verified_at,

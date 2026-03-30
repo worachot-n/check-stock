@@ -58,7 +58,7 @@ def inventory():
         SELECT
             {NAME_EXPR}                                        AS display_name,
             STRING_AGG(DISTINCT item_number, ', ')             AS item_numbers,
-            SUM(quantity)                                      AS total_quantity,
+            COUNT(*)                                           AS total_quantity,
             MAX(unit_of_measure)                               AS unit_of_measure,
             MAX(issuing_unit)                                  AS issuing_unit,
             STRING_AGG(CAST(sequence_no AS TEXT), ',')         AS seq_nos,
