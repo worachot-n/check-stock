@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-bold text-gray-800">ภาพรวมคลังอุปกรณ์</h1>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow p-6 flex items-center gap-4">
+            <div class="bg-blue-100 text-blue-700 rounded-full p-3 text-2xl">📦</div>
+            <div>
+                <p class="text-sm text-gray-500">รายการทั้งหมด</p>
+                <p class="text-3xl font-bold text-gray-800">{{ total }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6 flex items-center gap-4">
+            <div class="bg-green-100 text-green-700 rounded-full p-3 text-2xl">✅</div>
+            <div>
+                <p class="text-sm text-gray-500">ตรวจสอบแล้ว</p>
+                <p class="text-3xl font-bold text-green-700">{{ verified_count }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6 flex items-center gap-4">
+            <div class="bg-red-100 text-red-600 rounded-full p-3 text-2xl">⏳</div>
+            <div>
+                <p class="text-sm text-gray-500">ยังไม่ตรวจสอบ</p>
+                <p class="text-3xl font-bold text-red-600">{{ unverified_count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    {% if total > 0 %}
+    <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex justify-between text-sm text-gray-600 mb-2">
+            <span>ความคืบหน้าการตรวจสอบ</span>
+            <span>{{ "%.1f"|format(verified_count / total * 100) }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-green-500 h-3 rounded-full transition-all"
+                style="width: {{ (verified_count / total * 100)|round(1) }}%"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Verified -->
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">รายการที่ตรวจสอบล่าสุด</h2>
+
+        {% if recent_items %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-left">
+                        <th class="px-4 py-2 font-medium">ชื่ออุปกรณ์</th>
+                        <th class="px-4 py-2 font-medium">จำนวน</th>
+                        <th class="px-4 py-2 font-medium">หน่วย</th>
+                        <th class="px-4 py-2 font-medium">ผู้ตรวจสอบ</th>
+                        <th class="px-4 py-2 font-medium">วันที่ตรวจสอบ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for item, username in recent_items %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium text-gray-800">{{ item.item_name or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.quantity or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.unit_of_measure or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ username or '-' }}</td>
+                        <td class="px-4 py-3 text-gray-500">
+                            {{ item.last_verified_at.strftime('%d/%m/%Y %H:%M') if item.last_verified_at else '-' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-400 text-sm">ยังไม่มีรายการที่ตรวจสอบแล้ว</p>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <a href="{{ url_for('scanner.scan') }}"
+            class="bg-blue-700 hover:bg-blue-800 text-white rounded-xl p-6 text-center transition shadow">
+            <div class="text-3xl mb-2">📷</div>
+            <div class="font-semibold">สแกน Barcode</div>
+            <div class="text-sm text-blue-200 mt-1">ตรวจสอบและแก้ไขข้อมูลอุปกรณ์</div>
+        </a>
+        <a href="{{ url_for('labels.inventory') }}"
+            class="bg-green-700 hover:bg-green-800 text-white rounded-xl p-6 text-center transition shadow">
+            <div class="text-3xl mb-2">🏷️</div>
+            <div class="font-semibold">พิมพ์ Barcode Labels</div>
+            <div class="text-sm text-green-200 mt-1">เลือกรายการและสร้าง PDF</div>
+        </a>
+    </div>
+</div>
+{% endblock %}

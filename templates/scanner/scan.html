@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}สแกน Barcode{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <h1 class="text-2xl font-bold text-gray-800">สแกน Barcode อุปกรณ์</h1>
+
+    <!-- Scanner -->
+    <div class="bg-white rounded-xl shadow p-6">
+        <div id="reader" class="w-full rounded-lg overflow-hidden"></div>
+        <div class="mt-3 flex gap-2">
+            <input type="text" id="manual-uuid" placeholder="หรือพิมพ์ UUID โดยตรง..."
+                class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="lookupManual()"
+                class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition">
+                ค้นหา
+            </button>
+        </div>
+    </div>
+
+    <!-- Item Details -->
+    <div id="item-card" class="hidden bg-white rounded-xl shadow p-6 space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-800">ข้อมูลอุปกรณ์</h2>
+            <span id="verified-badge" class="hidden bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">✓ ตรวจสอบแล้ว</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+                <label class="block text-gray-500 mb-1">เลขที่อุปกรณ์</label>
+                <input type="text" id="f-item_number" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">ชื่ออุปกรณ์</label>
+                <input type="text" id="f-item_name" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">รายการที่ขอเบิก</label>
+                <input type="text" id="f-requisition_item" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">รายการเดิม</label>
+                <input type="text" id="f-original_item" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">จำนวน</label>
+                <input type="number" id="f-quantity" step="0.01" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยนับ</label>
+                <input type="text" id="f-unit_of_measure" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยงานที่จ่าย</label>
+                <input type="text" id="f-issuing_unit" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">หน่วยงานที่ขอเบิก</label>
+                <input type="text" id="f-requisition_unit" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">จ่ายให้</label>
+                <input type="text" id="f-issued_to" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">สถานะ</label>
+                <input type="text" id="f-status" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">ผู้รับผิดชอบ</label>
+                <input type="text" id="f-responsible_person" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">เบอร์โทรผู้รับผิดชอบ</label>
+                <input type="text" id="f-responsible_phone" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">วันที่ทำรายการ</label>
+                <input type="date" id="f-transaction_date" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-500 mb-1">เลขที่ใบเบิก</label>
+                <input type="text" id="f-requisition_number" class="w-full border rounded-lg px-3 py-2">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-500 mb-1">หมายเหตุ</label>
+                <textarea id="f-remarks" rows="2" class="w-full border rounded-lg px-3 py-2"></textarea>
+            </div>
+        </div>
+
+        <div class="text-xs text-gray-400 border-t pt-3">
+            <span id="last-verified-info"></span>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="verifyItem()"
+                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
+                ✓ ยืนยันข้อมูลถูกต้อง
+            </button>
+            <button onclick="updateItem()"
+                class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg transition">
+                💾 บันทึกการแก้ไข
+            </button>
+        </div>
+    </div>
+
+    <div id="error-msg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+{% endblock %}

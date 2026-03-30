@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}เข้าสู่ระบบ{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2 text-center">เข้าสู่ระบบ</h1>
+        <p class="text-gray-500 text-sm text-center mb-6">ระบบตรวจสอบคลังอุปกรณ์</p>
+
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label>
+                <input type="text" name="username" required autofocus
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
+                <input type="password" name="password" required
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit"
+                class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg transition">
+                เข้าสู่ระบบ
+            </button>
+        </form>
+
+        <div class="mt-4 text-center text-sm text-gray-500 space-y-1">
+            <p><a href="{{ url_for('auth.register') }}" class="text-blue-600 hover:underline">สมัครสมาชิก</a></p>
+            <p><a href="{{ url_for('auth.reset_password') }}" class="text-blue-600 hover:underline">ลืมรหัสผ่าน?</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

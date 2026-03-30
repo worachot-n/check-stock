@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ระบบตรวจสอบคลังอุปกรณ์{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+{% if current_user.is_authenticated %}
+<nav class="bg-blue-800 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between h-14">
+            <div class="flex items-center gap-6">
+                <a href="{{ url_for('dashboard.index') }}" class="font-bold text-lg">คลังอุปกรณ์</a>
+                <a href="{{ url_for('dashboard.index') }}" class="text-sm hover:text-blue-200 transition">Dashboard</a>
+                <a href="{{ url_for('scanner.scan') }}" class="text-sm hover:text-blue-200 transition">สแกน Barcode</a>
+                <a href="{{ url_for('labels.inventory') }}" class="text-sm hover:text-blue-200 transition">รายการอุปกรณ์</a>
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('admin.users') }}" class="text-sm hover:text-blue-200 transition">จัดการผู้ใช้</a>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-4 text-sm">
+                <span class="text-blue-200">{{ current_user.username }}
+                    {% if current_user.role == 'admin' %}
+                    <span class="bg-yellow-500 text-yellow-900 text-xs px-1.5 py-0.5 rounded ml-1">Admin</span>
+                    {% endif %}
+                </span>
+                <a href="{{ url_for('auth.logout') }}" class="hover:text-blue-200 transition">ออกจากระบบ</a>
+            </div>
+        </div>
+    </div>
+</nav>
+{% endif %}
+
+<main class="max-w-7xl mx-auto px-4 py-6">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="mb-4 space-y-2">
+        {% for category, message in messages %}
+        {% set colors = {
+            'success': 'bg-green-100 border-green-400 text-green-800',
+            'danger': 'bg-red-100 border-red-400 text-red-800',
+            'warning': 'bg-yellow-100 border-yellow-400 text-yellow-800',
+            'info': 'bg-blue-100 border-blue-400 text-blue-800',
+        } %}
+        <div class="border px-4 py-2 rounded {{ colors.get(category, 'bg-gray-100 border-gray-400 text-gray-800') }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
