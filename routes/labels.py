@@ -28,22 +28,21 @@ def inventory():
     search_like = f'%{search}%' if search else '%'
     params = {'search_like': search_like, 'section': section or None}
 
-    # Normalise name: trim whitespace, treat blank as NULL
-    NAME_EXPR = "COALESCE(NULLIF(TRIM(requisition_item), ''), NULLIF(TRIM(item_name), ''))"
+    NAME_EXPR = "COALESCE(NULLIF(requisition_item, ''), item_name)"
 
     where = f"""
         WHERE (:search_like = '%'
                OR {NAME_EXPR} ILIKE :search_like
-               OR TRIM(item_number) ILIKE :search_like)
+               OR item_number ILIKE :search_like)
           AND (:section IS NULL OR supply_control_section = :section)
     """
 
     # Distinct section list for the filter dropdown
     sections = db.session.execute(text("""
-        SELECT DISTINCT TRIM(supply_control_section)
+        SELECT DISTINCT supply_control_section
         FROM supply_requisitions
-        WHERE supply_control_section IS NOT NULL AND TRIM(supply_control_section) <> ''
-        ORDER BY 1
+        WHERE supply_control_section IS NOT NULL AND supply_control_section <> ''
+        ORDER BY supply_control_section
     """)).scalars().all()
 
     total_rows = db.session.execute(text(f"""
@@ -58,7 +57,7 @@ def inventory():
     rows = db.session.execute(text(f"""
         SELECT
             {NAME_EXPR}                                        AS display_name,
-            STRING_AGG(DISTINCT TRIM(item_number), ', ')      AS item_numbers,
+            STRING_AGG(DISTINCT item_number, ', ')             AS item_numbers,
             SUM(quantity)                                      AS total_quantity,
             MAX(unit_of_measure)                               AS unit_of_measure,
             MAX(issuing_unit)                                  AS issuing_unit,
@@ -94,8 +93,8 @@ def group_items():
         return jsonify([])
 
     items = SupplyRequisition.query.filter(
-        text("COALESCE(NULLIF(TRIM(requisition_item), ''), NULLIF(TRIM(item_name), '')) = :name")
-    ).params(name=display_name.strip()).order_by(SupplyRequisition.sequence_no).all()
+        text("COALESCE(NULLIF(requisition_item, ''), item_name) = :name")
+    ).params(name=display_name).order_by(SupplyRequisition.sequence_no).all()
 
     return jsonify([_to_dict(i) for i in items])
 

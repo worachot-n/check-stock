@@ -23,6 +23,23 @@ def _fix_sequence():
     db.session.commit()
 
 
+def _clean_name_whitespace():
+    """Trim whitespace from name fields so grouping works correctly."""
+    db.session.execute(text("""
+        UPDATE supply_requisitions
+        SET
+            requisition_item = TRIM(requisition_item),
+            item_name        = TRIM(item_name),
+            original_item    = TRIM(original_item),
+            item_number      = TRIM(item_number)
+        WHERE requisition_item IS DISTINCT FROM TRIM(requisition_item)
+           OR item_name        IS DISTINCT FROM TRIM(item_name)
+           OR original_item    IS DISTINCT FROM TRIM(original_item)
+           OR item_number      IS DISTINCT FROM TRIM(item_number)
+    """))
+    db.session.commit()
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -53,6 +70,7 @@ def create_app():
     with app.app_context():
         db.create_all()
         _fix_sequence()
+        _clean_name_whitespace()
 
     return app
 
