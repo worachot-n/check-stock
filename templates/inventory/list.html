@@ -195,6 +195,11 @@
                 <datalist id="dl-issued_to" data-field="issued_to"></datalist>
             </div>
             <div>
+                <label class="block text-gray-500 mb-1">ส่วนควบคุมสิ่งอุปกรณ์</label>
+                <input type="text" id="m-supply_control_section" list="dl-supply_control_section" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <datalist id="dl-supply_control_section" data-field="supply_control_section"></datalist>
+            </div>
+            <div>
                 <label class="block text-gray-500 mb-1">สถานะ</label>
                 <input type="text" id="m-status" list="dl-status" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 <datalist id="dl-status" data-field="status"></datalist>
@@ -271,7 +276,7 @@
 const TEXT_FIELDS = [
     'requisition_item','item_name','item_number','original_item',
     'quantity','unit_of_measure','issuing_unit','requisition_unit',
-    'issued_to','status','responsible_person','responsible_phone',
+    'issued_to','supply_control_section','status','responsible_person','responsible_phone',
     'transaction_date','supply_type','remarks'
 ];
 
@@ -418,6 +423,12 @@ function clearModal() {
 function openAddModal() {
     clearModal();
     document.getElementById('modal-title').textContent = 'เพิ่มรายการใหม่';
+    // Pre-fill section if currently filtered
+    const activeSection = {{ section | tojson }};
+    if (activeSection) {
+        const el = document.getElementById('m-supply_control_section');
+        if (el) el.value = activeSection;
+    }
     document.getElementById('item-modal').classList.remove('hidden');
 }
 
