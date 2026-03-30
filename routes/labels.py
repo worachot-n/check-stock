@@ -23,15 +23,25 @@ PER_PAGE = 50
 def inventory():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '').strip()
+    section = request.args.get('section', '').strip()
 
     search_like = f'%{search}%' if search else '%'
-    params = {'search_like': search_like}
+    params = {'search_like': search_like, 'section': section or None}
 
     where = """
         WHERE (:search_like = '%'
                OR COALESCE(requisition_item, item_name) ILIKE :search_like
                OR item_number ILIKE :search_like)
+          AND (:section IS NULL OR supply_control_section = :section)
     """
+
+    # Distinct section list for the filter dropdown
+    sections = db.session.execute(text("""
+        SELECT DISTINCT supply_control_section
+        FROM supply_requisitions
+        WHERE supply_control_section IS NOT NULL AND supply_control_section <> ''
+        ORDER BY supply_control_section
+    """)).scalars().all()
 
     total_rows = db.session.execute(text(f"""
         SELECT COUNT(*) FROM (
@@ -67,7 +77,8 @@ def inventory():
         'prev_num': page - 1, 'next_num': page + 1, 'total': total_rows,
     }
 
-    return render_template('inventory/list.html', rows=rows, pagination=pagination, search=search)
+    return render_template('inventory/list.html', rows=rows, pagination=pagination,
+                           search=search, section=section, sections=sections)
 
 
 # ─── CRUD: individual items ───────────────────────────────────────────────────

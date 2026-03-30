@@ -21,12 +21,32 @@
         </div>
     </div>
 
+    <!-- Section filter -->
+    {% if sections %}
+    <div class="flex flex-wrap gap-2 items-center">
+        <span class="text-sm text-gray-500 font-medium shrink-0">กรองตามหน่วย:</span>
+        <a href="{{ url_for('labels.inventory', search=search) }}"
+            class="text-sm px-3 py-1.5 rounded-full border transition
+                   {% if not section %}bg-blue-700 text-white border-blue-700{% else %}bg-white text-gray-600 border-gray-300 hover:bg-gray-100{% endif %}">
+            ทั้งหมด
+        </a>
+        {% for s in sections %}
+        <a href="{{ url_for('labels.inventory', section=s, search=search) }}"
+            class="text-sm px-3 py-1.5 rounded-full border transition
+                   {% if section == s %}bg-blue-700 text-white border-blue-700{% else %}bg-white text-gray-600 border-gray-300 hover:bg-gray-100{% endif %}">
+            {{ s }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Search -->
     <form method="GET" class="flex gap-2">
+        {% if section %}<input type="hidden" name="section" value="{{ section }}">{% endif %}
         <input type="text" name="search" value="{{ search }}" placeholder="ค้นหารายการขอเบิก, เลขที่..."
             class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition">ค้นหา</button>
-        {% if search %}
+        {% if search or section %}
         <a href="{{ url_for('labels.inventory') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg transition">ล้าง</a>
         {% endif %}
     </form>
@@ -109,12 +129,12 @@
     {% if pagination.pages > 1 %}
     <div class="flex justify-center gap-2 text-sm">
         {% if pagination.has_prev %}
-        <a href="{{ url_for('labels.inventory', page=pagination.prev_num, search=search) }}"
+        <a href="{{ url_for('labels.inventory', page=pagination.prev_num, search=search, section=section) }}"
             class="px-3 py-1.5 border rounded-lg hover:bg-gray-100 transition">← ก่อนหน้า</a>
         {% endif %}
         <span class="px-3 py-1.5 text-gray-600">หน้า {{ pagination.page }} / {{ pagination.pages }}</span>
         {% if pagination.has_next %}
-        <a href="{{ url_for('labels.inventory', page=pagination.next_num, search=search) }}"
+        <a href="{{ url_for('labels.inventory', page=pagination.next_num, search=search, section=section) }}"
             class="px-3 py-1.5 border rounded-lg hover:bg-gray-100 transition">ถัดไป →</a>
         {% endif %}
     </div>
